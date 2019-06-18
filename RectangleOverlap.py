@@ -124,6 +124,17 @@ class Interval_Union(object):
 
         return sum;
 
+    ############################################################################
+    # Special methods
+    def __str__(self):
+        str = ""
+        num_intervals = len(self.Interval_List)
+        for i in range(num_intervals-1):
+            str += str(self.Interval_List[i]) + " and "
+
+        str += self.Interval_List[num_intervals-1];
+        return str;
+
 
 
 # rectangle class
@@ -154,7 +165,139 @@ class Rectangle(object):
         else:
             return None;
 
+    ############################################################################
+    # Special methods
+    def __str__(self):
+        return str(self.x_range) + "x" + str(self.y_range);
+
+
+def read_rectangles():
+    # This function reads in a list of rectangles from Rectangles.txt. It then
+    # writes these rectangles to a list and returns that list
+    File = open("Rectangles.txt","r");
+
+    # First, read in the number of rectangles
+    num_recs = int(File.readline());
+
+    # Now, read in each rectangle.
+    Rectangles = [];
+    for i in range(num_recs):
+        # read in the line and space split it
+        ith_rectangle_coords = File.readline().split(" ");
+        ll_x = float(ith_rectangle_coords[0]);
+        ll_y = float(ith_rectangle_coords[1]);
+        ur_x = float(ith_rectangle_coords[2]);
+        ur_y = float(ith_rectangle_coords[3]);
+
+        Rectangles.append(Rectangle(ll_x, ll_y, ur_x, ur_y));
+
+    return Rectangles;
+
+
+
+def rectangles_right_intersection(Rectangles, x):
+    """ This function first finds the right-intersection of the verticlal line x
+    with the list of Rectangles. This is returned as an Interval Union object.
+
+    We say that a rectangle right-intersects the vertical line x if x is in the
+    x range of the rectangle and x is not the right edge of the rectangle.
+    In other words, the vertical line x must intersect the rectangle and the
+    rectangle must extend to the right of the vertical line x.
+
+    for each rectangle that right-intersects x, we append the intersection
+    interval onto a Interval_Union object. Once we have done this for each
+    rectangle that right-intersects x, we return the Interval_Union object. """
+
+    U = Interval_Union();
+    for rec in Rectangles:
+        if(rec.intersects_right(x)):
+            U.append(rec.intersection_right(x));
+
+    return U;
+
 
 
 def main():
-    
+    """ Here we find the total area covered by the Rectangles in Rectangles.txt.
+    To understand our approach, suppose that we want to find the area covered by
+    the following rectangles,
+    _______         ___________
+    |     |         |  ____   |
+    |   __|______   |  |  |   |
+    |   | |     |   |  |  |   |
+    |   | |     |   |  ----   |
+    ----|       |   -----------
+        ---------
+
+    Seems tricky. However, let's consider what we would get if we were to
+    "slice" the rectangles along a vertical line x = c. A little thought reveals
+    that we would get the verical cross section of the rectangles at x = c. Now
+    imagine what this cross section would look like as c moves left or right.
+    you may notice that the cross section only changes when we hit the left or
+    right edge of a rectangle.
+
+    With these insights, we can derive a method to find the area covered by
+    the rectangles. In particular, let Edges be the list of the x coordinates
+    of the left and right edges of every rectangle. for simplicity, we will
+    assume that Edges is sorted in ascending order. Notice that between
+    Edges[i] and Edges[i+1], the vertical cross section is constant (since no
+    rectangle begins or ends in that interval). As such, the area between
+    Edge[i] and Edge[i+1] that is covered by the rectangles is just the length
+    of the vertical cross section in that interval times Edge[i+1] - Edge[i].
+
+    What is the length of the vertical cross section? Considering the picture
+    below, we can see that the only rectangles that contribute to the area
+    are those that exist to the right of Edge[i]. In other words, if a rectangle
+    has its right edge at Edge[i], then it will not contribute to the vertical
+    cross section between Edge[i] and Edge[i+1]. Thus, we first find the set of
+    rectangles that exist between Edge[i] and Edge[i+1]. Next, we find the
+    intersection of each one of these rectangles with the vertical line Edge[i].
+    Next, we take the union of each of these intervals. Finally, we find
+    the length of the union. That length is the length of the vertical cross
+    section.
+
+    If we do this for each i then we will have found the area of the rectangles.
+    Visually, we're just splitting up the covered area along verticle lines
+    through the left and right edges of the rectangles, then adding up the
+    area of the rectangles between these slices.
+
+    |   | |     |   |  |  |   |
+    |___|_|     |   |__|__|___|
+    |   | |     |   |  |__|   |
+    |   |_|_____|   |  |  |   |
+    |   | |     |   |  |  |   |
+    |   | |     |   |  |--|   |
+    |---| |     |   |--|--|---|
+    |   |-|-----|   |  |  |   |
+    |   | |     |   |  |  |   | """
+
+    # First, read in the rectangles from the Rectangles.txt file
+    Rectangles = read_rectangles();
+
+    # collect the left and right ends of the rectangle into a set .
+    edge_coords = set();
+    for rec in Rectangles:
+        edge_coords.add(rec.x_range.a);
+        edge_coords.add(rec.x_range.b);
+
+    # Now, convert the set into a list and sort it.
+    sorted_edge_coords = sorted(list(edge_coords));
+
+    # Now we can cycle through the x coordinates and use this to find the area
+    # using the "sweep" method.
+    area = 0;
+
+    for i in range(len(sorted_edge_coords)-1):
+        # Find the right-intersection of the vertical line x with Rectangles. A
+        # rectangle right-intersects with the line x if x intersects with the
+        # rectangle and x is not the right edge of the rectangle.
+        U = rectangles_right_intersection(Rectangles, sorted_edge_coords[i]);
+
+        area += U.length()*(sorted_edge_coords[i+1] - sorted_edge_coords[i]);
+
+    print("The total area covered by the rectangles is %f" % area);
+
+
+
+if(__name__ == "__main__"):
+    main();
