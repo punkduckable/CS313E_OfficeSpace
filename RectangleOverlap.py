@@ -153,3 +153,8 @@ class Rectangle(object):
             return self.y_range;
         else:
             return None;
+
+
+
+def main():
+    
