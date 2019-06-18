@@ -54,7 +54,7 @@ class Rectangle(object):
     ############################################################################
     # Special methods
     def __str__(self):
-        return str(self.x_range) + "x" + self.y_range;
+        return str(self.x_range) + "x" + str(self.y_range);
 
     # Note: coord is assumed to be a 2 component tuple of the form (x,y)
     def __contains__(self, coords):
@@ -122,11 +122,62 @@ class Case(object):
     ############################################################################
     # Special methods
     def __str__(self):
-        str  = "Total %d\n" % self.office_area;
-        str += "Unallocated %d\n" % self.unallocated_area;
-        str += "Contested %d\n" % self.contested_area;
+        string  = "Total %d\n" % self.office_area;
+        string += "Unallocated %d\n" % self.unallocated_area;
+        string += "Contested %d\n" % self.contested_area;
 
         for (name, rec) in self.cubicle_requests.items():
-            str += name + str(rec) + '\n';
+            string += name + " " + str(rec.area()) + '\n';
 
-        return str;
+        return string;
+
+
+
+def read_cases_from_file(File):
+    """ This method reads in cases from File. It appends each case (as a case
+    type object) to a list of cases. The finished list is then returned.
+
+    File is assumed to use the format specified by the problem statement."""
+    case_list = [];
+
+    # keep looping until we reach the end of the file
+    while True:
+        Office_Size_string = File.readline().strip();
+        Office_Size_string = Office_Size_string.replace("\n","");
+
+        # Check if Office_Size_string is empty (indiciating end of file)
+        if(Office_Size_string == ""):
+            break;
+
+        Office_Size = Office_Size_string.split(" ");
+        w = int(Office_Size[0]);
+        h = int(Office_Size[1]);
+
+        # Now, read in the number of cubicle requests
+        num_cubicle_requests = int(File.readline());
+        cubicle_requests = {};
+        for i in range(num_cubicle_requests):
+            # read in the ith cubicle request. turn this into a rectangle/name
+            # pair and then append that pair to the cubicle_requests dictionary
+            request = File.readline().replace("\n","").split(" ");
+            name = request[0];
+            cubicle = Rectangle(int(request[1]), int(request[2]), int(request[3]), int(request[4]));
+            cubicle_requests[name] = cubicle;
+
+        case_list.append(Case(h,w,cubicle_requests));
+
+    return case_list;
+
+
+
+def main():
+    # Open the office.txt file and read in the cases
+    File = open("office.txt","r");
+    cases = read_cases_from_file(File);
+
+    # Now, print out the cases
+    for case in cases:
+        print(case);
+
+if (__name__ == "__main__"):
+    main();
