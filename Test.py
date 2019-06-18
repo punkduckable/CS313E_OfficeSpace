@@ -1,5 +1,5 @@
 import unittest;
-from OfficeSpace import Interval, Rectangle
+from OfficeSpace import Interval, Rectangle, Case
 
 class Interval_Tests(unittest.TestCase):
     def test_length(self):
@@ -41,6 +41,19 @@ class Rectangle_Tests(unittest.TestCase):
         self.assertIn((1,1), R1);
         self.assertNotIn((.5, 1.1), R1);
 
+
+
+class Case_Tests(unittest.TestCase):
+    def test_init(self):
+        h = 30;
+        w = 50;
+        cubicle_requests = {"Bob":Rectangle(1,1, 10, 10), "Jenny":Rectangle(30,10,50,30), "Blake":Rectangle(5, 0, 20, 20)};
+
+        C1 = Case(h,w,cubicle_requests);
+        self.assertEqual(C1.office_area, 1500);
+        self.assertEqual(C1.unallocated_area, 764);
+        self.assertEqual(C1.allocated_area, 736);
+        self.assertEqual(C1.contested_area, 45)
 
 
 def main():
