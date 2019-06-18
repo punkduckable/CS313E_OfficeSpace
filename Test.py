@@ -1,4 +1,4 @@
-from OfficeSpace import Interval, Interval_Union;
+from RectangleOverlap import Interval, Interval_Union;
 import unittest;
 
 # Interval tests.
