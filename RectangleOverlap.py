@@ -47,7 +47,7 @@ class Interval(object):
         else:
             return None;
 
-    def __len__(self):
+    def length(self):
         return self.b - self.a;
 
     ############################################################################
@@ -117,11 +117,39 @@ class Interval_Union(object):
             # List, we can safely append I onto the Interval List.
             self.Interval_List.append(I);
 
-    #############################################################################
-    # special member functions
-    def __len__(self):
+    def length(self):
         sum = 0;
         for i in range(len(self.Interval_List)):
-            sum += len(self.Interval_List[i]);
+            sum += self.Interval_List[i].length();
 
         return sum;
+
+
+
+# rectangle class
+class Rectangle(object):
+    # Constructor. ll_x/ll_y are the coordinates of the lower-left (south-west)
+    # corner of the rectangle. ur_x/ur_y are the coordinates of the upper-right
+    # (north east) coorner of the rectangle.
+    def __init__(self, ll_x, ll_y, ur_x, ur_y):
+        self.x_range = Interval(ll_x, ur_x);
+        self.y_range = Interval(ll_y, ur_y);
+
+
+    def area(self):
+        return self.x_range.length()*self.y_range.length();
+
+    # returns true if x is inside the x_range of self and the right edge of
+    # self is to the right of x. This occurs whenever x is in [a,b) where
+    # x_range = [a,b].
+    def intersects_right(self, x):
+        return (self.x_range.a <= x) and (x < self.x_range.b);
+
+    # if x intersects and is not the right edge of self (if intersects_right(x)
+    # is True) then this returns the interval of intersection (which is just
+    # the y range of self). Otherwise it returns None.
+    def intersection_right(self,x):
+        if(self.intersects_right(x)):
+            return self.y_range;
+        else:
+            return None;
