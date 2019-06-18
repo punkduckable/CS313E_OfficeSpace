@@ -75,10 +75,17 @@ class Case(object):
         self.w = w;
         self.cubicle_requests = cubicle_requests;
 
+        # Calculate the various areas.
         self.office_area = h*w;
         self.allocated_area = self._calculate_allocated_area();
         self.unallocated_area = self.office_area - self.allocated_area;
         self.contested_area = self._calculate_contested_area();
+
+        # Now, calculate the guaranteed areas for each employee.
+        self.guaranteed_area = {};
+        for name in cubicle_requests:
+             self.guaranteed_area[name] = self._calculate_guaranteed_area(name);
+
 
     def _calculate_allocated_area(self):
         """Since the coordinate of every rectangle is an integer (as well as the
@@ -107,7 +114,7 @@ class Case(object):
 
 
     def _calculate_contested_area(self):
-        """ This function calculates the contested area in the office. The
+        """ This method calculates the contested area in the office. The
         contested area is simply the sum of the area of the requested
         cubicles minus the total covered area.
 
@@ -119,15 +126,50 @@ class Case(object):
 
         return total_cubicle_area - self.allocated_area;
 
+
+    def _calculate_guaranteed_area(self, name):
+        """ This method calculates the guaranteed area for the employee named
+        "name". To do this, I sweep through the x range of name's cubicle
+        request. for each y value, I sweep through the y range. For each y
+        value, I determine if the square defined by the points (x,y) and
+        (x+1, y+1) has been claimed by another employee. If so, then the
+        employees contested area is incremented by one.
+
+        Once the contested area has been determined, we return the cubicle
+        area minus the contested area. """
+
+        contested_area = 0;
+        cubicle = self.cubicle_requests[name];
+        x_min = cubicle.x_range.a;
+        x_max = cubicle.x_range.b;
+        y_min = cubicle.y_range.a;
+        y_max = cubicle.y_range.b;
+
+        for x in range(x_min, x_max):
+            for y in range(y_min, y_max):
+                # cycle through the other employees
+                for employee, rec in self.cubicle_requests.items():
+                    # skip name (otheriwse everything would be contested)
+                    if(employee == name):
+                        continue;
+
+                    if (((x,y) in rec) and ((x+1, y+1) in rec)):
+                        contested_area +=1;
+                        break;
+
+        return cubicle.area() - contested_area;
+
     ############################################################################
     # Special methods
     def __str__(self):
+        # Print office parameters
         string  = "Total %d\n" % self.office_area;
         string += "Unallocated %d\n" % self.unallocated_area;
         string += "Contested %d\n" % self.contested_area;
 
-        for (name, rec) in self.cubicle_requests.items():
-            string += name + " " + str(rec.area()) + '\n';
+        # Now, print guaranteed area for each employee
+        for (name, area) in self.guaranteed_area.items():
+            string += name + " " + str(area) + '\n';
 
         return string;
 
