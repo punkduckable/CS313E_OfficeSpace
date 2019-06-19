@@ -12,7 +12,7 @@
 
    Date Created: 06/18/2019
 
-   Date Last Modified: 06/18/2019 """
+   Date Last Modified: 06/19/2019 """
 
 
 # Interval class (used to build rectangles)
@@ -86,32 +86,39 @@ class Case(object):
         for name in cubicle_requests:
              self.guaranteed_area[name] = self._calculate_guaranteed_area(name);
 
+    def _calculate_requested_area(self, x_min, x_max, y_min, y_max, skip_name = ""):
+        """ This method finds the area covered by the cubicles (in
+        self.cubicle_requests) in the domain [x_min, x_max] x [y_min, y_max].
+        As usual, the requested cubicles are assumed to have corners at interger
+        values. The user can optionally pass a "skip_name" argument. If
+        specified, then we will not count area covered by that employee's
+        request.
 
-    def _calculate_allocated_area(self):
-        """Since the coordinate of every rectangle is an integer (as well as the
-        diemsion of the office) we can find this area by "sweeping" through the
-        x values in the office. For each x value, we sweep through the y values.
-        for each y value, we check if the points (x,y) and (x+1,y+1) are
-        in at least one of the rectangles. If they are, then the rectangle defined
-        by (x,y) and (x+1,y+1) is covered, so we add one to the area. (otherwise
-        the area remains unchanged). Doing this for all x,y gives us the total
-        covered area. """
-        area = 0;
-        Rectangles = self.cubicle_requests.values();
+        To find the area, we cycle through the possible x values. For each x
+        value, we cycle through the possible y values. For each y value, we check
+        if there is an employee (who is not skip_name) such that both (x,y) and
+        (x+1, y+1) are in that employees cubicle request. If this is the case
+        then the square defined by those coordinates is covered by the requests,
+        so we incremenet the requested area by one. Once this has been done for
+        all x and y, we return the total requested area. """
+        requested_area = 0;
+        for x in range(x_min, x_max):
+            for y in range(y_min, y_max):
+                for employee, rec in self.cubicle_requests.items():
+                    if (employee == skip_name):
+                        continue;
 
-        for x in range(self.w):
-            for y in range(self.h):
-                # Cycle through the rectangles. For each one, check if both
-                # (x,y) and (x+1,y+1) is in that rectangle. If it is, then
-                # we can increment the area by 1 and move on to the next y
-                # value.
-                for rec in Rectangles:
-                    if (((x,y) in rec) and ((x+1, y+1) in rec)):
-                        area +=1;
+                    if(((x,y) in rec) and ((x+1, y+1) in rec)):
+                        requested_area +=1;
                         break;
 
-        return area;
+        return requested_area;
 
+    def _calculate_allocated_area(self):
+        """ This method calculates the total allocated area. This is simply the
+        area covered by every employee's request. We do this using the method
+        _calculate_requested_area. """
+        return self._calculate_requested_area(0, self.w, 0, self.h);
 
     def _calculate_contested_area(self):
         """ This method calculates the contested area in the office. The
@@ -126,38 +133,21 @@ class Case(object):
 
         return total_cubicle_area - self.allocated_area;
 
-
     def _calculate_guaranteed_area(self, name):
         """ This method calculates the guaranteed area for the employee named
-        "name". To do this, I sweep through the x range of name's cubicle
-        request. for each y value, I sweep through the y range. For each y
-        value, I determine if the square defined by the points (x,y) and
-        (x+1, y+1) has been claimed by another employee. If so, then the
-        employees contested area is incremented by one.
+        "name". To do this, I first find area in the employees cubicle request
+        that has been requested by other employees. This is the contested area
+        in that employees request. I find this area using the method
+        _calculate_requested_area, which is defined above. The employees
+        guaranteed area is simply their cubicle area minus the contested area. """
 
-        Once the contested area has been determined, we return the cubicle
-        area minus the contested area. """
-
-        contested_area = 0;
         cubicle = self.cubicle_requests[name];
         x_min = cubicle.x_range.a;
         x_max = cubicle.x_range.b;
         y_min = cubicle.y_range.a;
         y_max = cubicle.y_range.b;
 
-        for x in range(x_min, x_max):
-            for y in range(y_min, y_max):
-                # cycle through the other employees
-                for employee, rec in self.cubicle_requests.items():
-                    # skip name (otheriwse everything would be contested)
-                    if(employee == name):
-                        continue;
-
-                    if (((x,y) in rec) and ((x+1, y+1) in rec)):
-                        contested_area +=1;
-                        break;
-
-        return cubicle.area() - contested_area;
+        return cubicle.area() - self._calculate_requested_area(x_min, x_max, y_min, y_max, name);
 
     ############################################################################
     # Special methods
