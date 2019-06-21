@@ -1,6 +1,8 @@
 """File: OfficeSpace.py
 
-   Description:
+   Description: Analyzed cubicle requests in office.txt. In particular, we
+   find the area of the office, total requested area, total contested area, and
+   report the guaranteed (uncontested) area for each employee. 
 
    Student Name: Robert Stephany
 
